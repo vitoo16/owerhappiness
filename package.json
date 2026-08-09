@@ -1,0 +1,57 @@
+{
+  "name": "thong-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @portfolio/contracts build && concurrently -k -n contracts,api,web -c auto \"pnpm --filter @portfolio/contracts dev\" \"pnpm --filter @portfolio/api dev\" \"pnpm --filter @portfolio/web dev\"",
+    "build": "pnpm --filter @portfolio/contracts build && pnpm --filter @portfolio/api build && pnpm --filter @portfolio/web build",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "pnpm --filter @portfolio/contracts typecheck && pnpm --filter @portfolio/api typecheck && pnpm --filter @portfolio/web typecheck",
+    "test": "pnpm --filter @portfolio/contracts build && pnpm --filter @portfolio/api test && pnpm --filter @portfolio/web test",
+    "test:e2e": "playwright test",
+    "check": "pnpm audit:architecture && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset",
+    "db:studio": "prisma studio",
+    "audit:architecture": "node scripts/architecture-audit.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "argon2": "^0.44.0",
+    "dotenv": "^17.2.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "concurrently": "^9.2.0",
+    "prettier": "^3.6.0",
+    "prisma": "^7.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.3",
+    "eslint": "^9.33.0",
+    "@eslint/js": "^9.33.0",
+    "typescript-eslint": "^8.39.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "@next/eslint-plugin-next": "^16.3.0",
+    "globals": "^16.3.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "@scarf/scarf",
+      "argon2",
+      "esbuild",
+      "prisma",
+      "sharp"
+    ]
+  }
+}
