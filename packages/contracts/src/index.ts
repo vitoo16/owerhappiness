@@ -116,7 +116,10 @@ export type BlockContentMap = {
   TECH_CALLOUT: z.infer<typeof techCalloutBlockContentSchema>;
 };
 
-export function parseBlockContent<T extends BlockType>(type: T, value: unknown): BlockContentMap[T] {
+export function parseBlockContent<T extends BlockType>(
+  type: T,
+  value: unknown,
+): BlockContentMap[T] {
   return blockContentSchemas[type].parse(value) as BlockContentMap[T];
 }
 
@@ -134,10 +137,7 @@ export interface BlockMediaReference {
  * scanning arbitrary strings so UUID-like text inside code/paragraph blocks is
  * never mistaken for an asset reference.
  */
-export function blockMediaReferences(
-  type: BlockType,
-  value: unknown,
-): BlockMediaReference[] {
+export function blockMediaReferences(type: BlockType, value: unknown): BlockMediaReference[] {
   if (type === 'IMAGE') {
     const content = parseBlockContent('IMAGE', value);
     return [
@@ -261,6 +261,46 @@ export interface DashboardDto {
   playgroundItems: number;
   mediaAssets: number;
   recentProjects: ProjectDto[];
+}
+
+export interface DeskOverviewDto {
+  projects: number;
+  publishedProjects: number;
+  draftProjects: number;
+  milestones: number;
+  notes: number;
+  snippets: number;
+  bookmarks: number;
+  utilities: number;
+}
+
+export interface DeskNote {
+  id: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeskSnippet {
+  id: string;
+  title: string;
+  language: string;
+  code: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeskBookmark {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PageMeta {

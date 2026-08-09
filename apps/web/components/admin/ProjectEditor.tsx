@@ -131,6 +131,7 @@ export function ProjectEditor({ initial }: ProjectEditorProps) {
   async function runLifecycle(action: 'publish' | 'unpublish' | 'archive') {
     if (!projectId) return;
     clearFeedback();
+    setBusy(true);
 
     try {
       const updated = await api<ProjectDto>(`/admin/projects/${projectId}/${action}`, {
@@ -141,6 +142,8 @@ export function ProjectEditor({ initial }: ProjectEditorProps) {
       router.refresh();
     } catch (caught) {
       setError(errorMessage(caught, 'Action failed.'));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -159,17 +162,14 @@ export function ProjectEditor({ initial }: ProjectEditorProps) {
     }
 
     try {
-      const created = await api<ProjectBlockDto>(
-        `/admin/projects/${projectId}/blocks`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            type,
-            content: initialContent,
-            sortOrder: blocks.length,
-          }),
-        },
-      );
+      const created = await api<ProjectBlockDto>(`/admin/projects/${projectId}/blocks`, {
+        method: 'POST',
+        body: JSON.stringify({
+          type,
+          content: initialContent,
+          sortOrder: blocks.length,
+        }),
+      });
       setBlocks((current) => [...current, created]);
     } catch (caught) {
       setError(errorMessage(caught, 'Could not add block.'));
@@ -181,20 +181,15 @@ export function ProjectEditor({ initial }: ProjectEditorProps) {
     clearFeedback();
 
     try {
-      const saved = await api<ProjectBlockDto>(
-        `/admin/projects/${projectId}/blocks/${block.id}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            type: block.type,
-            content: block.content,
-            sortOrder: block.sortOrder,
-          }),
-        },
-      );
-      setBlocks((current) =>
-        current.map((item) => (item.id === saved.id ? saved : item)),
-      );
+      const saved = await api<ProjectBlockDto>(`/admin/projects/${projectId}/blocks/${block.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          type: block.type,
+          content: block.content,
+          sortOrder: block.sortOrder,
+        }),
+      });
+      setBlocks((current) => current.map((item) => (item.id === saved.id ? saved : item)));
       setMessage('Block saved.');
     } catch (caught) {
       setError(errorMessage(caught, 'Could not save block.'));
@@ -244,12 +239,14 @@ export function ProjectEditor({ initial }: ProjectEditorProps) {
     if (!confirm('Permanently delete this draft project? This cannot be undone.')) return;
 
     clearFeedback();
+    setBusy(true);
     try {
       await api(`/admin/projects/${projectId}`, { method: 'DELETE' });
       router.replace('/admin/projects');
       router.refresh();
     } catch (caught) {
       setError(errorMessage(caught, 'Could not delete project.'));
+      setBusy(false);
     }
   }
 
@@ -354,16 +351,13 @@ export function ProjectEditor({ initial }: ProjectEditorProps) {
 
 interface ProjectDataFormProps {
   form: ProjectFormState;
-  projectId?: string;
+  projectId: string | undefined;
   media: MediaAssetDto[];
   gallery: string[];
   busy: boolean;
   error: string;
   message: string;
-  onPatch: <K extends keyof ProjectFormState>(
-    key: K,
-    value: ProjectFormState[K],
-  ) => void;
+  onPatch: <K extends keyof ProjectFormState>(key: K, value: ProjectFormState[K]) => void;
   onGalleryChange: React.Dispatch<React.SetStateAction<string[]>>;
   onSubmit: (event?: FormEvent) => Promise<void>;
   onLifecycle: (action: 'publish' | 'unpublish' | 'archive') => Promise<void>;
@@ -470,10 +464,7 @@ function ProjectDataForm({
           />
         </Field>
         <Field label="Client">
-          <input
-            value={form.client}
-            onChange={(event) => onPatch('client', event.target.value)}
-          />
+          <input value={form.client} onChange={(event) => onPatch('client', event.target.value)} />
         </Field>
       </div>
 
@@ -594,6 +585,7 @@ function ProjectDataForm({
           <button
             type="button"
             className="ghost-button"
+            disabled={busy || form.status === 'PUBLISHED'}
             onClick={() => void onLifecycle('publish')}
           >
             Publish
@@ -601,6 +593,7 @@ function ProjectDataForm({
           <button
             type="button"
             className="ghost-button"
+            disabled={busy || form.status !== 'PUBLISHED'}
             onClick={() => void onLifecycle('unpublish')}
           >
             Unpublish
@@ -608,6 +601,7 @@ function ProjectDataForm({
           <button
             type="button"
             className="ghost-button danger"
+            disabled={busy || form.status === 'ARCHIVED'}
             onClick={() => void onLifecycle('archive')}
           >
             Archive
@@ -616,6 +610,7 @@ function ProjectDataForm({
             <button
               type="button"
               className="ghost-button danger"
+              disabled={busy}
               onClick={() => void onDeleteProject()}
             >
               Delete draft
@@ -982,9 +977,11 @@ function defaultBlockContent(type: BlockType, media: MediaAssetDto[]): unknown |
     case 'IMAGE':
       return media[0] ? { mediaAssetId: media[0].id } : null;
     case 'IMAGE_GROUP':
-      return media.length >= 2
-        ? { mediaAssetIds: [media[0].id, media[1].id], layout: 'two-column' }
-        : null;
+      if (!media[0] || !media[1]) return null;
+      return {
+        mediaAssetIds: [media[0].id, media[1].id],
+        layout: 'two-column',
+      };
     case 'QUOTE':
       return { text: 'A useful quote or design insight.' };
     case 'VIDEO':

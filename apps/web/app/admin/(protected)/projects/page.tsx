@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ProjectDto } from '@portfolio/contracts';
+import { ProjectsTable } from '@/components/admin/ProjectsTable';
 import { privateApi } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
   const query = await searchParams;
   const params = buildQuery(query);
   const projects = await privateApi<ProjectDto[]>(`/admin/projects?${params}`);
+  const canReorder = !query.q && !query.status && !query.type;
 
   return (
     <div className="admin-page">
@@ -36,11 +38,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
           placeholder="Search title or summary…"
           aria-label="Search projects"
         />
-        <select
-          name="status"
-          defaultValue={query.status ?? ''}
-          aria-label="Project status"
-        >
+        <select name="status" defaultValue={query.status ?? ''} aria-label="Project status">
           <option value="">All statuses</option>
           <option value="DRAFT">DRAFT</option>
           <option value="PUBLISHED">PUBLISHED</option>
@@ -58,33 +56,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         </Link>
       </form>
 
-      <div className="admin-table">
-        <div className="table-head">
-          <span>Project</span>
-          <span>Type</span>
-          <span>Status</span>
-          <span>Year</span>
-          <span />
-        </div>
-        {projects.map((project) => (
-          <Link
-            className="table-row"
-            href={`/admin/projects/${project.id}`}
-            key={project.id}
-          >
-            <div>
-              <strong>{project.title}</strong>
-              <small>/{project.slug}</small>
-            </div>
-            <span>{project.type}</span>
-            <span className={`status ${project.status.toLowerCase()}`}>
-              {project.status}
-            </span>
-            <span>{project.year}</span>
-            <span>edit →</span>
-          </Link>
-        ))}
-      </div>
+      <ProjectsTable initial={projects} canReorder={canReorder} />
 
       {!projects.length ? (
         <div className="admin-empty">

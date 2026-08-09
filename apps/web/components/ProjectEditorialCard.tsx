@@ -6,11 +6,13 @@ import { Stickman } from './Stickman';
 interface ProjectEditorialCardProps {
   project: ProjectDto;
   index: number;
+  preload?: boolean;
 }
 
-export function ProjectEditorialCard({ project, index }: ProjectEditorialCardProps) {
+export function ProjectEditorialCard({ project, index, preload }: ProjectEditorialCardProps) {
   const href = `/work/${project.slug}`;
   const tags = [...project.technologies.slice(0, 5), ...project.services.slice(0, 3)];
+  const shouldPreload = preload ?? index < 2;
 
   return (
     <article className={`project-editorial ${index % 2 ? 'reverse' : ''}`}>
@@ -23,7 +25,8 @@ export function ProjectEditorialCard({ project, index }: ProjectEditorialCardPro
             alt={project.coverImage.altText || project.title}
             fill
             sizes="(max-width: 900px) 92vw, 58vw"
-            priority={index < 2}
+            preload={shouldPreload}
+            loading={shouldPreload ? undefined : 'lazy'}
           />
         ) : (
           <div className="project-placeholder">

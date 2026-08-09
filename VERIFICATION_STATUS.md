@@ -1,43 +1,39 @@
 # Verification status
 
-## Completed in the artifact-generation environment
+## Passed in this delivery
 
-The repository was statically audited after the final source edits:
+The final source was checked on 2026-08-10 using the repository's installed local toolchain:
 
-- Architecture audit passed: **16 required Phase-8 artifacts** present and **52 web TS/TSX files** checked for forbidden Prisma/database imports.
-- TypeScript/TSX compiler-parser audit passed: **105 source files**, zero syntax diagnostics (generated Prisma client intentionally excluded until `pnpm db:generate`).
-- Internal relative-import audit passed for source-owned modules; **8 generated Prisma-client imports** are expected to resolve after `pnpm db:generate`.
-- CSS structural audit passed.
-- JSON/package configuration parse audit passed.
-- No explicit `any` usage in `apps/`, `packages/`, or `tests/`.
-- No `TODO` / `FIXME` / `HACK` / `XXX` markers in application source.
-- No seeded demo project names are hardcoded in the Next.js web layer.
-- Source tree, Prisma schema, committed initial migration, seed, API/web route coverage, local-media path strategy, and reference-doc inclusion were reviewed programmatically.
+- Contracts TypeScript build: passed.
+- NestJS API TypeScript check: passed.
+- Next.js Web TypeScript check: passed.
+- ESLint with zero allowed warnings: passed.
+- NestJS production build: passed.
+- Next.js 16.3 production build: passed, including all public, Admin, My Space, metadata, robots, and sitemap routes.
+- `git diff --check`: passed.
 
-## Runtime gate that still must be executed locally
+The build commands used local package binaries because the host `pnpm` shim attempted a registry lookup for `@pnpm/exe`. No dependency download was needed.
 
-The artifact environment cannot install the project's npm dependencies (`pnpm` is not available and registry-backed dependency installation is unavailable here). Therefore I am **not** claiming that the framework build, full typecheck, Jest suite, Prisma migration against a live PostgreSQL instance, or Playwright suite has executed in this environment.
+## Intentionally not run
 
-After extracting, run:
+Per the owner's instruction, this delivery did **not** run Jest, Playwright, E2E, or other automated test suites. `pnpm check` was also not run because it includes tests.
 
-```bash
-corepack enable
-pnpm install
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.local.example apps/web/.env.local
-# edit apps/api/.env
-docker compose -f docker-compose.local.yml up -d postgres
-pnpm db:generate
-pnpm db:migrate
-pnpm db:seed
-pnpm check
-pnpm dev
-```
+No claim is made here for browser interaction, a live PostgreSQL migration/seed, or authenticated CRUD against a running local stack. Those remain manual acceptance steps.
 
-Then, while the app is running:
+## Manual acceptance checklist
 
-```bash
-E2E_OWNER_EMAIL=... E2E_OWNER_PASSWORD=... pnpm test:e2e
-```
+1. Start PostgreSQL, apply the committed migration, seed, and start API + Web.
+2. Verify all public routes at desktop, tablet, and mobile widths; open and close the mobile menu.
+3. Sign in at `/admin/login`; confirm invalid credentials and logout failures surface useful messages.
+4. Create/edit/publish/unpublish/archive a project, reorder projects, edit its blocks/media, and verify `/work` plus `/work/[slug]` update without source edits.
+5. Create/edit/delete/reorder milestones and playground items; verify `/journey` and `/playground` reflect published data.
+6. Upload media, edit alt text, select it in content, and verify referenced media cannot be deleted.
+7. Edit multiple Settings fields, confirm the unsaved counter, save once, and verify public metadata/content/theme.
+8. Open `/desk`; exercise all eight utilities. Confirm JWT decoding states that signatures are not verified and no tool input persists.
+9. Create/edit/search/delete Notes, Snippets, and Bookmarks; refresh each route to confirm owner-scoped persistence.
+10. On `/`, click the Hero scroll control and each desktop chapter marker; confirm smooth navigation, active-chapter updates, and reversible Hero/Work/Playground/Contact scrub effects.
+11. Scroll through Journey in both directions; confirm the line, mascot, dots, years, copy, and milestone characters follow one continuous timeline.
+12. Repeat the landing flow on mobile, then enable reduced motion and confirm every section remains visible and usable without scroll-linked movement.
+13. With browser Network throttling enabled, reload `/`: confirm project images load only near the viewport and the deferred Journey chunk is requested before Journey enters view without causing a layout jump.
 
-`Phase 8 — LOCAL COMPLETE` should be signed off only after those runtime checks pass on the target developer machine.
+Production deployment, domain, Cloudflare, and home-server work remain deferred until manual Local Complete acceptance.

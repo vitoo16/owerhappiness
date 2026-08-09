@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -21,6 +22,7 @@ import {
   CreateProjectDto,
   ProjectQueryDto,
   ReorderBlocksDto,
+  ReorderProjectsDto,
   UpdateBlockDto,
   UpdateProjectDto,
   UpdateProjectMediaDto,
@@ -55,7 +57,7 @@ export class AdminProjectsController {
   }
 
   @Get(':id')
-  get(@Param('id') id: string) {
+  get(@Param('id', ParseUUIDPipe) id: string) {
     return this.projects.adminById(id);
   }
 
@@ -65,54 +67,60 @@ export class AdminProjectsController {
     return this.projects.create(dto);
   }
 
+  @Put('order')
+  @UseGuards(OriginGuard)
+  reorder(@Body() dto: ReorderProjectsDto) {
+    return this.projects.reorder(dto);
+  }
+
   @Patch(':id')
   @UseGuards(OriginGuard)
-  update(@Param('id') id: string, @Body() dto: UpdateProjectDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateProjectDto) {
     return this.projects.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(OriginGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id') id: string) {
+  delete(@Param('id', ParseUUIDPipe) id: string) {
     return this.projects.delete(id);
   }
 
   @Post(':id/publish')
   @UseGuards(OriginGuard)
-  publish(@Param('id') id: string) {
+  publish(@Param('id', ParseUUIDPipe) id: string) {
     return this.projects.publish(id);
   }
 
   @Post(':id/unpublish')
   @UseGuards(OriginGuard)
-  unpublish(@Param('id') id: string) {
+  unpublish(@Param('id', ParseUUIDPipe) id: string) {
     return this.projects.unpublish(id);
   }
 
   @Post(':id/archive')
   @UseGuards(OriginGuard)
-  archive(@Param('id') id: string) {
+  archive(@Param('id', ParseUUIDPipe) id: string) {
     return this.projects.archive(id);
   }
 
   @Put(':id/media')
   @UseGuards(OriginGuard)
-  updateMedia(@Param('id') id: string, @Body() dto: UpdateProjectMediaDto) {
+  updateMedia(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateProjectMediaDto) {
     return this.projects.updateGallery(id, dto);
   }
 
   @Post(':id/blocks')
   @UseGuards(OriginGuard)
-  addBlock(@Param('id') id: string, @Body() dto: CreateBlockDto) {
+  addBlock(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CreateBlockDto) {
     return this.projects.addBlock(id, dto);
   }
 
   @Patch(':id/blocks/:blockId')
   @UseGuards(OriginGuard)
   updateBlock(
-    @Param('id') id: string,
-    @Param('blockId') blockId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('blockId', ParseUUIDPipe) blockId: string,
     @Body() dto: UpdateBlockDto,
   ) {
     return this.projects.updateBlock(id, blockId, dto);
@@ -121,13 +129,16 @@ export class AdminProjectsController {
   @Delete(':id/blocks/:blockId')
   @UseGuards(OriginGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteBlock(@Param('id') id: string, @Param('blockId') blockId: string) {
+  deleteBlock(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('blockId', ParseUUIDPipe) blockId: string,
+  ) {
     return this.projects.deleteBlock(id, blockId);
   }
 
   @Put(':id/blocks/order')
   @UseGuards(OriginGuard)
-  reorderBlocks(@Param('id') id: string, @Body() dto: ReorderBlocksDto) {
+  reorderBlocks(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReorderBlocksDto) {
     return this.projects.reorderBlocks(id, dto);
   }
 }

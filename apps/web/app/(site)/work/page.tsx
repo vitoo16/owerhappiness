@@ -30,10 +30,27 @@ export default async function WorkPage({
         </header>
 
         <nav className="filter-nav" aria-label="Project filter">
-          <Link href="/work">All</Link>
-          <Link href="/work?type=DEVELOPMENT">Development</Link>
-          <Link href="/work?type=DESIGN">Design</Link>
-          <Link href="/work?type=HYBRID">Hybrid</Link>
+          <Link href="/work" aria-current={!query.type ? 'page' : undefined}>
+            All
+          </Link>
+          <Link
+            href="/work?type=DEVELOPMENT"
+            aria-current={query.type === 'DEVELOPMENT' ? 'page' : undefined}
+          >
+            Development
+          </Link>
+          <Link
+            href="/work?type=DESIGN"
+            aria-current={query.type === 'DESIGN' ? 'page' : undefined}
+          >
+            Design
+          </Link>
+          <Link
+            href="/work?type=HYBRID"
+            aria-current={query.type === 'HYBRID' ? 'page' : undefined}
+          >
+            Hybrid
+          </Link>
         </nav>
 
         <div className="project-list">

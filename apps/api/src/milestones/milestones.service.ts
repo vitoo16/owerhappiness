@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
-import { UpsertMilestoneDto } from './dto/milestone.dto';
+import { ReorderMilestonesDto, UpsertMilestoneDto } from './dto/milestone.dto';
 
 const milestoneInclude = {
   mediaAsset: true,
@@ -37,6 +37,7 @@ export class MilestonesService {
   }
 
   async create(dto: UpsertMilestoneDto) {
+    await this.assertMediaExists(dto.mediaAssetId);
     const milestone = await this.prisma.milestone.create({
       data: this.toData(dto),
       include: milestoneInclude,
@@ -46,6 +47,7 @@ export class MilestonesService {
 
   async update(id: string, dto: UpsertMilestoneDto) {
     await this.assertExists(id);
+    await this.assertMediaExists(dto.mediaAssetId);
     const milestone = await this.prisma.milestone.update({
       where: { id },
       data: this.toData(dto),
@@ -57,6 +59,28 @@ export class MilestonesService {
   async delete(id: string) {
     await this.assertExists(id);
     await this.prisma.milestone.delete({ where: { id } });
+  }
+
+  async reorder(dto: ReorderMilestonesDto) {
+    const milestones = await this.prisma.milestone.findMany({ select: { id: true } });
+    const actual = new Set(milestones.map((milestone) => milestone.id));
+    if (
+      dto.milestoneIds.length !== actual.size ||
+      new Set(dto.milestoneIds).size !== dto.milestoneIds.length ||
+      dto.milestoneIds.some((id) => !actual.has(id))
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_MILESTONE_ORDER',
+        message: 'Order must contain every milestone exactly once.',
+      });
+    }
+
+    await this.prisma.$transaction(
+      dto.milestoneIds.map((id, sortOrder) =>
+        this.prisma.milestone.update({ where: { id }, data: { sortOrder } }),
+      ),
+    );
+    return { updated: dto.milestoneIds.length };
   }
 
   private map(milestone: MilestoneRecord) {
@@ -96,6 +120,21 @@ export class MilestonesService {
       throw new NotFoundException({
         code: 'MILESTONE_NOT_FOUND',
         message: 'Milestone not found.',
+      });
+    }
+  }
+
+  private async assertMediaExists(id: string | null | undefined) {
+    if (!id) return;
+    const asset = await this.prisma.mediaAsset.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!asset) {
+      throw new BadRequestException({
+        code: 'INVALID_MEDIA_REFERENCE',
+        message: 'The selected milestone media does not exist.',
+        fields: { mediaAssetId: 'Not found' },
       });
     }
   }

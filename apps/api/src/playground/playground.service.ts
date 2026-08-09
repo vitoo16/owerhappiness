@@ -1,9 +1,14 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Prisma } from '../generated/prisma/client';
 import { normalizeSlug } from '../common/utils/slug';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
-import { UpsertPlaygroundDto } from './dto/playground.dto';
+import { ReorderPlaygroundDto, UpsertPlaygroundDto } from './dto/playground.dto';
 
 const playgroundInclude = {
   thumbnail: true,
@@ -53,6 +58,7 @@ export class PlaygroundService {
   async create(dto: UpsertPlaygroundDto) {
     const slug = normalizeSlug(dto.slug || dto.title);
     await this.assertSlugAvailable(slug);
+    await this.assertMediaExists(dto.thumbnailId);
 
     const item = await this.prisma.playgroundItem.create({
       data: {
@@ -70,6 +76,7 @@ export class PlaygroundService {
     const current = await this.getExisting(id);
     const slug = normalizeSlug(dto.slug || dto.title);
     await this.assertSlugAvailable(slug, id);
+    await this.assertMediaExists(dto.thumbnailId);
 
     const item = await this.prisma.playgroundItem.update({
       where: { id },
@@ -77,9 +84,7 @@ export class PlaygroundService {
         ...this.toData(dto),
         slug,
         publishedAt:
-          dto.status === 'PUBLISHED'
-            ? current.publishedAt ?? new Date()
-            : current.publishedAt,
+          dto.status === 'PUBLISHED' ? (current.publishedAt ?? new Date()) : current.publishedAt,
       },
       include: playgroundInclude,
     });
@@ -90,6 +95,28 @@ export class PlaygroundService {
   async delete(id: string) {
     await this.getExisting(id);
     await this.prisma.playgroundItem.delete({ where: { id } });
+  }
+
+  async reorder(dto: ReorderPlaygroundDto) {
+    const items = await this.prisma.playgroundItem.findMany({ select: { id: true } });
+    const actual = new Set(items.map((item) => item.id));
+    if (
+      dto.playgroundIds.length !== actual.size ||
+      new Set(dto.playgroundIds).size !== dto.playgroundIds.length ||
+      dto.playgroundIds.some((id) => !actual.has(id))
+    ) {
+      throw new BadRequestException({
+        code: 'INVALID_PLAYGROUND_ORDER',
+        message: 'Order must contain every playground item exactly once.',
+      });
+    }
+
+    await this.prisma.$transaction(
+      dto.playgroundIds.map((id, sortOrder) =>
+        this.prisma.playgroundItem.update({ where: { id }, data: { sortOrder } }),
+      ),
+    );
+    return { updated: dto.playgroundIds.length };
   }
 
   private map(item: PlaygroundRecord) {
@@ -163,5 +190,20 @@ export class PlaygroundService {
       code: 'PLAYGROUND_NOT_FOUND',
       message: 'Playground item not found.',
     });
+  }
+
+  private async assertMediaExists(id: string | null | undefined) {
+    if (!id) return;
+    const asset = await this.prisma.mediaAsset.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!asset) {
+      throw new BadRequestException({
+        code: 'INVALID_MEDIA_REFERENCE',
+        message: 'The selected playground thumbnail does not exist.',
+        fields: { thumbnailId: 'Not found' },
+      });
+    }
   }
 }

@@ -131,9 +131,7 @@ export class ProjectQueryDto {
   status?: ProjectStatus;
 
   @IsOptional()
-  @Transform(({ value }) =>
-    value === 'true' ? true : value === 'false' ? false : value,
-  )
+  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
   @IsBoolean()
   featured?: boolean;
 
@@ -144,16 +142,7 @@ export class ProjectQueryDto {
 }
 
 export class CreateBlockDto {
-  @IsIn([
-    'HEADING',
-    'PARAGRAPH',
-    'IMAGE',
-    'IMAGE_GROUP',
-    'QUOTE',
-    'VIDEO',
-    'CODE',
-    'TECH_CALLOUT',
-  ])
+  @IsIn(['HEADING', 'PARAGRAPH', 'IMAGE', 'IMAGE_GROUP', 'QUOTE', 'VIDEO', 'CODE', 'TECH_CALLOUT'])
   type!: string;
 
   @Allow()
@@ -172,6 +161,13 @@ export class ReorderBlocksDto {
   @ArrayMaxSize(100)
   @IsUUID(undefined, { each: true })
   blockIds!: string[];
+}
+
+export class ReorderProjectsDto {
+  @IsArray()
+  @ArrayMaxSize(500)
+  @IsUUID(undefined, { each: true })
+  projectIds!: string[];
 }
 
 export class UpdateProjectMediaDto {

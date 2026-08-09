@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   UploadedFile,
@@ -38,14 +39,14 @@ export class MediaController {
 
   @Patch(':id')
   @UseGuards(OriginGuard)
-  update(@Param('id') id: string, @Body() dto: UpdateMediaDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMediaDto) {
     return this.media.update(id, dto.altText);
   }
 
   @Delete(':id')
   @UseGuards(OriginGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id') id: string) {
+  delete(@Param('id', ParseUUIDPipe) id: string) {
     return this.media.delete(id);
   }
 }

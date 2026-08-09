@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
   IsInt,
   IsObject,
@@ -54,4 +56,11 @@ export class UpsertPlaygroundDto {
   @Type(() => Number)
   @IsInt()
   sortOrder!: number;
+}
+
+export class ReorderPlaygroundDto {
+  @IsArray()
+  @ArrayMaxSize(500)
+  @IsUUID(undefined, { each: true })
+  playgroundIds!: string[];
 }

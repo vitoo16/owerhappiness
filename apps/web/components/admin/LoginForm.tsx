@@ -1,7 +1,7 @@
 'use client';
 
 import { type FormEvent, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { api, ClientApiError } from '@/lib/client-api';
 
 export function LoginForm() {
@@ -9,7 +9,6 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   async function submit(event: FormEvent) {
@@ -24,9 +23,8 @@ export function LoginForm() {
       });
 
       const requestedPath = searchParams.get('next');
-      const destination = requestedPath?.startsWith('/') ? requestedPath : '/admin';
-      router.replace(destination);
-      router.refresh();
+      const destination = safePrivateDestination(requestedPath);
+      window.location.assign(new URL(destination, window.location.origin).toString());
     } catch (caught) {
       setError(caught instanceof ClientApiError ? caught.message : 'Unable to sign in.');
     } finally {
@@ -69,4 +67,17 @@ export function LoginForm() {
       </button>
     </form>
   );
+}
+
+function safePrivateDestination(value: string | null) {
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+    return '/admin';
+  }
+
+  return value === '/desk' ||
+    value.startsWith('/desk/') ||
+    value === '/admin' ||
+    value.startsWith('/admin/')
+    ? value
+    : '/admin';
 }

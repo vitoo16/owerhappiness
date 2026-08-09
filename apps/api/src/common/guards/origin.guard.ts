@@ -11,6 +11,7 @@ export class OriginGuard implements CanActivate {
     if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return true;
 
     const expected = this.config.getOrThrow<string>('CORS_ORIGIN');
+    if (expected === '*') return true;
     const apiPort = this.config.getOrThrow<number>('API_PORT');
     const developmentApiOrigin = `http://localhost:${apiPort}`;
     const origin = request.get('origin');

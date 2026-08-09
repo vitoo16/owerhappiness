@@ -5,13 +5,15 @@ Local-first implementation of the portfolio specification in `docs/reference/`.
 ## What is included
 
 - **Public portfolio:** `/`, `/work`, `/work/[slug]`, `/journey`, `/playground`, `/about`, `/contact`
-- **Owner CMS:** `/admin`, projects, milestones, playground, media, settings, case-study block builder
-- **Private Desk:** `/desk` with JSON formatter, JWT decoder, UUID generator, timestamp converter and persisted scratch notes
+- **Owner CMS:** `/admin`, projects, milestones, playground, media, settings, case-study block builder, and transactional resource ordering
+- **Private My Space:** `/desk` dashboard plus `/desk/tools`, `/desk/notes`, `/desk/snippets`, and `/desk/bookmarks`
+- **Local utilities:** JSON, JWT, UUID, Unix time, Regex, URL encoding, UTF-8 Base64, and HEX/RGB/HSL conversion; utility input stays in the browser
 - **API:** NestJS REST API with owner authentication, HttpOnly session cookie, server-side guards, validation and consistent response envelopes
 - **Data:** PostgreSQL + Prisma migrations/seed; public content is database-driven
 - **Media:** local image storage, safe generated paths, JPEG/PNG/WebP validation, Sharp normalization to WebP, metadata in PostgreSQL, reference-aware deletion
-- **Motion:** GSAP + ScrollTrigger only for storytelling/reveal layers, plus `prefers-reduced-motion`
+- **Motion:** scoped GSAP timelines through `@gsap/react`/`useGSAP`; ScrollTo navigation, lazy ScrollTrigger section initialization, fade/push chapter transitions, Hero/Selected Work storytelling, and a dynamically imported Journey timeline
 - **Themes:** blush/cream editorial light theme and dusty-plum dark theme
+- **Discoverability:** CMS-driven metadata, per-project canonical/Open Graph data, generated social image, robots, and sitemap
 - **Quality:** strict TypeScript configuration, API unit tests, Playwright smoke/E2E scenarios, static architecture audit
 
 Production deployment, domain, Cloudflare and the home server are deliberately not implemented in this milestone.
@@ -82,6 +84,8 @@ Open:
 
 Sign in with `OWNER_EMAIL` / `OWNER_PASSWORD` from `apps/api/.env`.
 
+My Space collections are stored per owner in PostgreSQL through the protected Desk API. Notes, snippets, and bookmarks support create, edit, search, and delete; the legacy quick scratchpad remains available on the Notes page.
+
 ## Daily development
 
 ```bash
@@ -107,6 +111,8 @@ Playwright expects the app to already be running. To use custom test credentials
 ```bash
 E2E_OWNER_EMAIL=... E2E_OWNER_PASSWORD=... pnpm test:e2e
 ```
+
+For the current delivery, the requested verification scope was lint, TypeScript, and production builds only. Automated tests were intentionally not run; see `VERIFICATION_STATUS.md` and use the manual checklist there.
 
 ## Content flow
 

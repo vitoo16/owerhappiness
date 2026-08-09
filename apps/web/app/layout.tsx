@@ -6,25 +6,39 @@ import './globals.css';
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const settings = await getPublicSettings();
+    const siteTitle = textSetting(
+      settings,
+      'seoTitle',
+      'Thông — Designer-ish / Fullstack Developer',
+    );
+    const description = textSetting(
+      settings,
+      'seoDescription',
+      'Personal portfolio, case studies and creative experiments.',
+    );
     return {
+      metadataBase: resolveSiteUrl(),
       title: {
-        default: textSetting(
-          settings,
-          'seoTitle',
-          'Thông — Designer-ish / Fullstack Developer',
-        ),
+        default: siteTitle,
         template: `%s — ${textSetting(settings, 'ownerName', 'Thông')}`,
       },
-      description: textSetting(
-        settings,
-        'seoDescription',
-        'Personal portfolio, case studies and creative experiments.',
-      ),
+      description,
+      alternates: { canonical: '/' },
+      openGraph: {
+        type: 'website',
+        url: '/',
+        title: siteTitle,
+        description,
+        siteName: textSetting(settings, 'siteTitle', 'Thông Portfolio'),
+      },
+      twitter: { card: 'summary_large_image', title: siteTitle, description },
     };
   } catch {
     return {
+      metadataBase: resolveSiteUrl(),
       title: 'Thông — Designer-ish / Fullstack Developer',
       description: 'Personal portfolio, case studies and creative experiments.',
+      alternates: { canonical: '/' },
     };
   }
 }
@@ -55,4 +69,12 @@ async function resolveDefaultTheme() {
 function themePrepaintScript(defaultTheme: string) {
   const fallback = JSON.stringify(defaultTheme);
   return `(function(){try{var stored=localStorage.getItem('portfolio-theme');var fallback=${fallback};var value=stored==='dark'||stored==='light'?stored:(fallback==='dark'||fallback==='light'?fallback:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));document.documentElement.dataset.theme=value}catch(e){}})()`;
+}
+
+function resolveSiteUrl() {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
+  } catch {
+    return new URL('http://localhost:3000');
+  }
 }

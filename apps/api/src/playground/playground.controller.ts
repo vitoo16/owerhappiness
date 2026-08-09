@@ -6,14 +6,16 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { OwnerGuard } from '../auth/owner.guard';
 import { OriginGuard } from '../common/guards/origin.guard';
-import { UpsertPlaygroundDto } from './dto/playground.dto';
+import { ReorderPlaygroundDto, UpsertPlaygroundDto } from './dto/playground.dto';
 import { PlaygroundService } from './playground.service';
 
 @Controller('playground')
@@ -47,16 +49,22 @@ export class AdminPlaygroundController {
     return this.playground.create(dto);
   }
 
+  @Put('order')
+  @UseGuards(OriginGuard)
+  reorder(@Body() dto: ReorderPlaygroundDto) {
+    return this.playground.reorder(dto);
+  }
+
   @Patch(':id')
   @UseGuards(OriginGuard)
-  update(@Param('id') id: string, @Body() dto: UpsertPlaygroundDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpsertPlaygroundDto) {
     return this.playground.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(OriginGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('id') id: string) {
+  delete(@Param('id', ParseUUIDPipe) id: string) {
     return this.playground.delete(id);
   }
 }

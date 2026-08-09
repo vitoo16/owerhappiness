@@ -47,8 +47,11 @@ export async function privateApi<T>(path: string, options: RequestInit = {}) {
 export async function requireOwner() {
   try {
     return await privateApi<{ id: string; email: string; role: 'OWNER' }>('/auth/me');
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      return null;
+    }
+    throw error;
   }
 }
 

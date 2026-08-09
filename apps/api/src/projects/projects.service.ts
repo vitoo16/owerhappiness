@@ -4,11 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  blockMediaReferences,
-  parseBlockContent,
-  type BlockType,
-} from '@portfolio/contracts';
+import { blockMediaReferences, parseBlockContent, type BlockType } from '@portfolio/contracts';
 import type { MediaAsset, Prisma, ProjectBlock } from '../generated/prisma/client';
 import { normalizeSlug } from '../common/utils/slug';
 import { PrismaService } from '../prisma/prisma.service';
@@ -17,6 +13,7 @@ import {
   CreateProjectDto,
   ProjectQueryDto,
   ReorderBlocksDto,
+  ReorderProjectsDto,
   UpdateBlockDto,
   UpdateProjectDto,
   UpdateProjectMediaDto,
@@ -126,9 +123,28 @@ export class ProjectsService {
     return this.mapDetailWithReferencedMedia(project);
   }
 
+  async reorder(dto: ReorderProjectsDto) {
+    const projects = await this.prisma.project.findMany({ select: { id: true } });
+    this.assertCompleteOrder(
+      dto.projectIds,
+      projects.map((project) => project.id),
+      'INVALID_PROJECT_ORDER',
+      'Order must contain every project exactly once.',
+    );
+
+    await this.prisma.$transaction(
+      dto.projectIds.map((id, sortOrder) =>
+        this.prisma.project.update({ where: { id }, data: { sortOrder } }),
+      ),
+    );
+
+    return { updated: dto.projectIds.length };
+  }
+
   async create(dto: CreateProjectDto) {
     const slug = normalizeSlug(dto.slug || dto.title);
     await this.assertSlugAvailable(slug);
+    await this.assertMediaExists(dto.coverImageId);
 
     if (dto.status === 'PUBLISHED') {
       throw new BadRequestException({
@@ -150,6 +166,7 @@ export class ProjectsService {
 
     const slug = dto.slug === undefined ? existing.slug : normalizeSlug(dto.slug);
     await this.assertSlugAvailable(slug, id);
+    await this.assertMediaExists(dto.coverImageId);
     if (dto.status !== undefined && dto.status !== existing.status) {
       throw new BadRequestException({
         code: 'USE_LIFECYCLE_ACTION',
@@ -179,18 +196,12 @@ export class ProjectsService {
     if (!project.role.trim()) missing.push('role');
     if (!project.coverImageId && !project.coverOmitted) missing.push('coverImage');
 
-    const referencesByBlock = new Map<
-      string,
-      ReturnType<typeof blockMediaReferences>
-    >();
+    const referencesByBlock = new Map<string, ReturnType<typeof blockMediaReferences>>();
     const referencedIds = new Set<string>();
 
     for (const block of project.blocks) {
       try {
-        const references = blockMediaReferences(
-          block.type as BlockType,
-          block.content,
-        );
+        const references = blockMediaReferences(block.type as BlockType, block.content);
         referencesByBlock.set(block.id, references);
         references.forEach((reference) => referencedIds.add(reference.mediaAssetId));
       } catch {
@@ -340,17 +351,12 @@ export class ProjectsService {
       where: { projectId },
       select: { id: true },
     });
-    const actual = new Set(blocks.map((block) => block.id));
-    if (
-      dto.blockIds.length !== actual.size ||
-      new Set(dto.blockIds).size !== dto.blockIds.length ||
-      dto.blockIds.some((id) => !actual.has(id))
-    ) {
-      throw new BadRequestException({
-        code: 'INVALID_BLOCK_ORDER',
-        message: 'Order must contain every project block exactly once.',
-      });
-    }
+    this.assertCompleteOrder(
+      dto.blockIds,
+      blocks.map((block) => block.id),
+      'INVALID_BLOCK_ORDER',
+      'Order must contain every project block exactly once.',
+    );
 
     await this.prisma.$transaction(
       dto.blockIds.map((id, sortOrder) =>
@@ -449,7 +455,9 @@ export class ProjectsService {
   }
 
   private stringList(value: Prisma.JsonValue): string[] {
-    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+    return Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === 'string')
+      : [];
   }
 
   private parseBlock(type: string, content: unknown) {
@@ -458,7 +466,10 @@ export class ProjectsService {
     } catch (error) {
       const message =
         error && typeof error === 'object' && 'issues' in error
-          ? String((error as { issues?: Array<{ message?: string }> }).issues?.[0]?.message ?? 'Invalid block payload')
+          ? String(
+              (error as { issues?: Array<{ message?: string }> }).issues?.[0]?.message ??
+                'Invalid block payload',
+            )
           : 'Invalid block payload';
       throw new BadRequestException({
         code: 'INVALID_BLOCK',
@@ -468,13 +479,12 @@ export class ProjectsService {
     }
   }
 
-
   private async mapDetailWithReferencedMedia(project: ProjectDetailRecord) {
     const ids = new Set<string>();
     for (const block of project.blocks) {
       try {
-        blockMediaReferences(block.type as BlockType, block.content).forEach(
-          (reference) => ids.add(reference.mediaAssetId),
+        blockMediaReferences(block.type as BlockType, block.content).forEach((reference) =>
+          ids.add(reference.mediaAssetId),
         );
       } catch {
         // Admin may still need to open an old invalid draft to repair it.
@@ -528,6 +538,37 @@ export class ProjectsService {
   private async ensureProject(id: string) {
     const project = await this.prisma.project.findUnique({ where: { id }, select: { id: true } });
     if (!project) this.notFound();
+  }
+
+  private async assertMediaExists(id: string | null | undefined) {
+    if (!id) return;
+    const asset = await this.prisma.mediaAsset.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!asset) {
+      throw new BadRequestException({
+        code: 'INVALID_MEDIA_REFERENCE',
+        message: 'The selected media asset does not exist.',
+        fields: { coverImageId: 'Not found' },
+      });
+    }
+  }
+
+  private assertCompleteOrder(
+    submitted: string[],
+    actualIds: string[],
+    code: string,
+    message: string,
+  ) {
+    const actual = new Set(actualIds);
+    if (
+      submitted.length !== actual.size ||
+      new Set(submitted).size !== submitted.length ||
+      submitted.some((id) => !actual.has(id))
+    ) {
+      throw new BadRequestException({ code, message });
+    }
   }
 
   private notFound(): never {

@@ -8,7 +8,7 @@ const envSchema = z.object({
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   OWNER_EMAIL: z.string().email(),
   OWNER_PASSWORD: z.string().min(10),
-  CORS_ORIGIN: z.string().url().default('http://localhost:3000'),
+  CORS_ORIGIN: z.union([z.literal('*'), z.string().url()]).default('http://localhost:3000'),
   MEDIA_ROOT: z.string().min(1).default('../../local-data/uploads'),
   MAX_UPLOAD_BYTES: z.coerce.number().int().min(1024).max(25 * 1024 * 1024).default(5 * 1024 * 1024),
 });

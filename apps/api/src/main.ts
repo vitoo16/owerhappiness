@@ -29,7 +29,7 @@ async function bootstrap() {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
-  app.enableCors({ origin: corsOrigin, credentials: true });
+  app.enableCors({ origin: corsOrigin === '*' ? true : corsOrigin, credentials: true });
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new ApiExceptionFilter());
   app.useGlobalInterceptors(new ApiEnvelopeInterceptor());

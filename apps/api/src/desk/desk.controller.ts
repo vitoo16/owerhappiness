@@ -11,24 +11,22 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { utilityKeySchema, utilityNamespaceSchema } from '@portfolio/contracts';
-import type { Prisma } from '../generated/prisma/client';
 import { AuthGuard } from '../auth/auth.guard';
 import { OwnerGuard } from '../auth/owner.guard';
-import {
-  CurrentUser,
-  type AuthenticatedUser,
-} from '../common/decorators/current-user.decorator';
+import { CurrentUser, type AuthenticatedUser } from '../common/decorators/current-user.decorator';
 import { OriginGuard } from '../common/guards/origin.guard';
-import { PrismaService } from '../prisma/prisma.service';
-
-interface UtilityValueBody {
-  value: Prisma.InputJsonValue;
-}
+import { DeskService } from './desk.service';
+import { UpdateUtilityDataDto } from './dto/utility-data.dto';
 
 @Controller('desk')
 @UseGuards(AuthGuard, OwnerGuard)
 export class DeskController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly desk: DeskService) {}
+
+  @Get('overview')
+  overview(@CurrentUser() user: AuthenticatedUser) {
+    return this.desk.overview(user.id);
+  }
 
   @Get('data/:namespace/:key')
   async getValue(
@@ -38,17 +36,7 @@ export class DeskController {
   ) {
     this.assertValidKey(namespace, key);
 
-    const row = await this.prisma.utilityData.findUnique({
-      where: {
-        userId_namespace_key: {
-          userId: user.id,
-          namespace,
-          key,
-        },
-      },
-    });
-
-    return row?.value ?? null;
+    return this.desk.getValue(user.id, namespace, key);
   }
 
   @Put('data/:namespace/:key')
@@ -57,28 +45,11 @@ export class DeskController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('namespace') namespace: string,
     @Param('key') key: string,
-    @Body() body: UtilityValueBody,
+    @Body() body: UpdateUtilityDataDto,
   ) {
     this.assertValidKey(namespace, key);
 
-    const row = await this.prisma.utilityData.upsert({
-      where: {
-        userId_namespace_key: {
-          userId: user.id,
-          namespace,
-          key,
-        },
-      },
-      create: {
-        userId: user.id,
-        namespace,
-        key,
-        value: body.value,
-      },
-      update: { value: body.value },
-    });
-
-    return row.value;
+    return this.desk.putValue(user.id, namespace, key, body.value);
   }
 
   @Delete('data/:namespace/:key')
@@ -90,9 +61,7 @@ export class DeskController {
     @Param('key') key: string,
   ) {
     this.assertValidKey(namespace, key);
-    await this.prisma.utilityData.deleteMany({
-      where: { userId: user.id, namespace, key },
-    });
+    await this.desk.deleteValue(user.id, namespace, key);
   }
 
   private assertValidKey(namespace: string, key: string) {
