@@ -39,7 +39,7 @@
   box-sizing: border-box;
 }
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   background: var(--background);
 }
 body {
@@ -341,11 +341,37 @@ button:disabled {
   position: relative;
   isolation: isolate;
 }
+.story-scene {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
 .story-section {
   position: relative;
 }
+.story-edge-line {
+  position: absolute;
+  top: 0;
+  right: var(--gutter);
+  left: var(--gutter);
+  height: 1px;
+  background: color-mix(in srgb, var(--accent) 38%, var(--soft-border));
+  transform-origin: 50% 50%;
+}
+.story-chapter {
+  overflow: clip;
+}
 .story-section > .container {
   transform-origin: 50% 0;
+}
+.hero-word,
+.story-motion-line {
+  display: inline-block;
+  backface-visibility: hidden;
+}
+.story-motion-line {
+  display: block;
+  transform-origin: 50% 100%;
 }
 .story-progress {
   position: fixed;
@@ -399,8 +425,14 @@ button:disabled {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.story-progress button span {
-  font-variant-numeric: tabular-nums;
+.story-progress-marker {
+  width: 9px;
+  height: 1px;
+  flex: 0 0 auto;
+  background: currentColor;
+  transition:
+    width 0.3s ease,
+    background-color 0.3s ease;
 }
 .story-progress button em {
   max-width: 0;
@@ -414,6 +446,11 @@ button:disabled {
 .story-progress button:hover,
 .story-progress button.active {
   color: var(--text);
+}
+.story-progress button:hover .story-progress-marker,
+.story-progress button.active .story-progress-marker {
+  width: 18px;
+  background: var(--accent);
 }
 .story-progress button:hover em,
 .story-progress button.active em {
@@ -431,6 +468,9 @@ button:disabled {
 }
 .section-label span:first-child {
   color: var(--accent);
+}
+.section-label-plain {
+  gap: 0;
 }
 .about-statement {
   display: grid;
@@ -759,6 +799,22 @@ button:disabled {
   font-size: clamp(1.4rem, 3vw, 3rem);
   border-bottom: 1px solid var(--line);
   margin-top: 38px;
+}
+.contact-scene .contact-email {
+  --contact-line: 1;
+  position: relative;
+  border-bottom: 0;
+}
+.contact-scene .contact-email::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(var(--contact-line));
+  transform-origin: 50% 50%;
 }
 .socials {
   display: flex;
@@ -2746,13 +2802,6 @@ blockquote cite {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-  }
-  .hero-character,
-  .timeline-mascot,
-  .scroll-hint i,
-  .timeline-line span,
-  .story-progress-track i {
-    will-change: auto;
   }
 }
 .admin-filters {

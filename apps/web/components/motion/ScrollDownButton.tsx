@@ -8,15 +8,25 @@ export function ScrollDownButton({ targetId }: { targetId: string }) {
   const { contextSafe } = useGSAP(
     () => {
       const media = gsap.matchMedia();
-      media.add('(prefers-reduced-motion: no-preference)', () => {
-        gsap.to('[data-scroll-arrow]', {
-          y: 5,
-          duration: 0.75,
-          ease: 'sine.inOut',
-          repeat: -1,
-          yoyo: true,
-        });
-      });
+      media.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          motionPreference: '(prefers-reduced-motion: no-preference)',
+        },
+        (context) => {
+          const { reduceMotion } = context.conditions as {
+            reduceMotion: boolean;
+            motionPreference: boolean;
+          };
+          gsap.to('[data-scroll-arrow]', {
+            y: reduceMotion ? 2 : 5,
+            duration: reduceMotion ? 1.1 : 0.75,
+            ease: 'sine.inOut',
+            repeat: -1,
+            yoyo: true,
+          });
+        },
+      );
 
       return () => media.revert();
     },
@@ -27,16 +37,13 @@ export function ScrollDownButton({ targetId }: { targetId: string }) {
     const target = document.getElementById(targetId);
     if (!target) return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      target.scrollIntoView();
-      return;
-    }
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     gsap.to(window, {
-      duration: 1.05,
+      duration: reduceMotion ? 0.55 : 1.05,
       ease: 'power3.inOut',
-      overwrite: 'auto',
-      scrollTo: { y: target, offsetY: 68 },
+      overwrite: true,
+      scrollTo: { y: target, offsetY: 68, autoKill: false },
     });
   });
 

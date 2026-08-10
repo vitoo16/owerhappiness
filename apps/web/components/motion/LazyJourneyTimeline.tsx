@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { MilestoneDto } from '@portfolio/contracts';
-import { gsap, ScrollTrigger, useGSAP } from './gsap';
+import { ScrollTrigger, useGSAP } from './gsap';
 
 const DeferredJourneyTimeline = dynamic(
   () => import('../JourneyTimeline').then((module) => module.JourneyTimeline),
@@ -14,13 +14,12 @@ export function LazyJourneyTimeline({ items }: { items: MilestoneDto[] }) {
   const root = useRef<HTMLDivElement>(null);
   const [requested, setRequested] = useState(false);
   const [ready, setReady] = useState(false);
-  const { contextSafe } = useGSAP({ scope: root });
 
-  const requestLoad = contextSafe(() => setRequested(true));
-  const markReady = contextSafe(() => {
+  const requestLoad = useCallback(() => setRequested(true), []);
+  const markReady = useCallback(() => {
     setReady(true);
-    gsap.delayedCall(0, () => ScrollTrigger.refresh());
-  });
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+  }, []);
 
   useGSAP(
     () => {
@@ -30,8 +29,8 @@ export function LazyJourneyTimeline({ items }: { items: MilestoneDto[] }) {
       const loader = ScrollTrigger.create({
         id: 'home-journey-loader',
         trigger: element,
-        start: 'top 125%',
-        end: 'bottom -25%',
+        start: 'top 150%',
+        end: 'bottom -50%',
         once: true,
         refreshPriority: 30,
         onEnter: requestLoad,
@@ -51,7 +50,7 @@ export function LazyJourneyTimeline({ items }: { items: MilestoneDto[] }) {
       data-ready={ready}
       aria-busy={!ready}
       ref={root}
-      style={{ minHeight: reservedHeight }}
+      style={{ minHeight: ready ? undefined : reservedHeight }}
     >
       <div className="lazy-journey-placeholder" aria-hidden>
         <span className="lazy-journey-placeholder-line" />

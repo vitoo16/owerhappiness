@@ -38,12 +38,20 @@ export function JourneyTimeline({
 
           if (reduceMotion) {
             if (progress) gsap.set(progress, { scaleY: 1 });
+            if (mascot.current) gsap.set(mascot.current, { y: 0 });
+            gsap.set(milestones, { autoAlpha: 1, clearProps: 'transform' });
             return;
           }
 
           const storyDuration = Math.max(1, milestones.length);
+          const milestonePosition = gsap.utils.mapRange(
+            0,
+            Math.max(1, milestones.length - 1),
+            0.14,
+            Math.max(0.55, storyDuration - 0.52),
+          );
           const timeline = gsap.timeline({
-            defaults: { duration: 0.48, ease: 'power3.out' },
+            defaults: { duration: 0.46, ease: 'power2.out' },
             scrollTrigger: {
               trigger: element,
               start: isDesktop ? 'top 72%' : 'top 82%',
@@ -83,17 +91,22 @@ export function JourneyTimeline({
             const copy = milestone.querySelector<HTMLElement>(':scope > div:not(.milestone-dot)');
             const character = milestone.querySelector<HTMLElement>(':scope > .milestone-stick');
             const label = `milestone-${index + 1}`;
-            const position =
-              milestones.length === 1
-                ? 0.15
-                : (index / (milestones.length - 1)) * Math.max(0.5, storyDuration - 0.55);
+            const position = milestones.length === 1 ? 0.15 : milestonePosition(index);
             timeline.addLabel(label, position);
             if (year) {
-              timeline.from(year, { autoAlpha: 0, x: -16 }, label);
+              timeline.from(
+                year,
+                { autoAlpha: 0, scaleX: 0.72, transformOrigin: '100% 50%' },
+                label,
+              );
             }
             if (dot) {
               timeline
-                .from(dot, { autoAlpha: 0, scale: 0.25, duration: 0.36 }, `${label}+=0.04`)
+                .from(
+                  dot,
+                  { autoAlpha: 0, scale: 0.25, duration: 0.36 },
+                  `${label}+=0.04`,
+                )
                 .to(
                   dot,
                   { backgroundColor: 'var(--accent)', scale: 1.16, duration: 0.32 },
@@ -101,12 +114,25 @@ export function JourneyTimeline({
                 );
             }
             if (copy) {
-              timeline.from(copy, { autoAlpha: 0, y: 24 }, `${label}+=0.08`);
+              timeline.from(
+                copy,
+                {
+                  autoAlpha: 0,
+                  rotationX: -22,
+                  transformOrigin: '50% 0%',
+                  transformPerspective: 900,
+                },
+                `${label}+=0.08`,
+              );
             }
             if (character) {
               timeline.from(
                 character,
-                { autoAlpha: 0, rotation: -7, scale: 0.88 },
+                {
+                  autoAlpha: 0,
+                  rotation: -7,
+                  scale: 0.88,
+                },
                 `${label}+=0.14`,
               );
             }
