@@ -365,11 +365,13 @@ button:disabled {
   transform-origin: 50% 0;
 }
 .hero-word,
-.story-motion-line {
+.story-motion-line,
+.route-motion-line {
   display: inline-block;
   backface-visibility: hidden;
 }
-.story-motion-line {
+.story-motion-line,
+.route-motion-line {
   display: block;
   transform-origin: 50% 100%;
 }
@@ -816,6 +818,22 @@ button:disabled {
   transform: scaleX(var(--contact-line));
   transform-origin: 50% 50%;
 }
+.public-route-motion .contact-page .contact-email {
+  --contact-line: 1;
+  position: relative;
+  border-bottom: 0;
+}
+.public-route-motion .contact-page .contact-email::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(var(--contact-line));
+  transform-origin: 50% 50%;
+}
 .socials {
   display: flex;
   gap: 24px;
@@ -1201,19 +1219,6 @@ blockquote cite {
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
-  animation: pulse 1s infinite alternate;
-}
-.page-loading i:nth-child(3) {
-  animation-delay: 0.2s;
-}
-.page-loading i:nth-child(4) {
-  animation-delay: 0.4s;
-}
-@keyframes pulse {
-  to {
-    opacity: 0.2;
-    transform: translateY(-5px);
-  }
 }
 .empty-copy {
   padding: 45px;

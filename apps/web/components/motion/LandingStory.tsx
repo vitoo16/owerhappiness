@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { gsap, ScrollTrigger, SplitText, useGSAP } from './homeGsap';
+import { gsap, ScrollTrigger, SplitText, useGSAP } from './storyGsap';
 
 const chapters = [
   { id: 'story-hero', label: 'intro' },

@@ -1,1 +1,5 @@
-export default function Loading(){return <div className="page-loading" aria-live="polite"><span>loading</span><i/><i/><i/></div>}
+import { PageLoadingMotion } from '@/components/motion/PageLoadingMotion';
+
+export default function Loading() {
+  return <PageLoadingMotion />;
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { gsap, SplitText, useGSAP } from './motion/homeGsap';
+import { gsap, SplitText, useGSAP } from './motion/storyGsap';
 
 export function HeroMotion({ children }: { children: React.ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
