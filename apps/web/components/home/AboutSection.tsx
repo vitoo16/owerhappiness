@@ -12,10 +12,15 @@ export function AboutSection({ settings }: { settings: SettingsMap }) {
       <div>
         <div className="about-statement">
           <p>somewhere between</p>
-          <strong>FIGMA</strong>
-          <span className="amp">&amp;</span>
-          <strong>VS CODE.</strong>
-          <Stickman pose="think" />
+          <div className="about-statement-row">
+            <strong data-about-word="figma">FIGMA</strong>
+            <span className="amp">&amp;</span>
+            <strong data-about-word="code">VS CODE.</strong>
+            {/* Flipped so point arm aims left at the pair of words */}
+            <span className="about-stick" aria-hidden>
+              <Stickman pose="point" />
+            </span>
+          </div>
         </div>
         <div className="about-bottom">
           <p>

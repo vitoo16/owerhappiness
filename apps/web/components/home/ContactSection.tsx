@@ -18,6 +18,7 @@ export function ContactSection({ settings }: { settings: SettingsMap }) {
       <SectionLabel>SAY HELLO</SectionLabel>
       <div>
         <div className="contact-inner">
+          {/* Celebrate above the invite — arms up frame the headline */}
           <Stickman pose="celebrate" />
           <p className="hand-note">still here?</p>
           <h2 data-story-heading>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { IntroCutscene } from './IntroCutscene';
 import { gsap, ScrollTrigger, SplitText, useGSAP } from './storyGsap';
 
 const chapters = [
@@ -108,6 +109,7 @@ export function LandingStory({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="landing-story" ref={root}>
+      <IntroCutscene />
       <nav className="story-progress" aria-label="Homepage chapters">
         <span className="story-progress-track" aria-hidden>
           <i data-story-progress />

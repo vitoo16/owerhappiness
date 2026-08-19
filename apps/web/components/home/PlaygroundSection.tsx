@@ -8,13 +8,16 @@ export function PlaygroundSection({ items }: { items: PlaygroundItemDto[] }) {
   return (
     <StorySection className="section-peach" id="story-playground" story="playground">
       <SectionLabel>PLAYGROUND</SectionLabel>
-      <div className="section-intro">
+      <div className="section-intro section-intro-playground">
+        {/* Draw arm aims into the title when stickman sits on the left */}
+        <span className="section-intro-stick" aria-hidden>
+          <Stickman pose="draw" />
+        </span>
         <h2 data-story-heading>
           things nobody
           <br />
           asked me to make.
         </h2>
-        <Stickman pose="draw" />
       </div>
       <div className="playground-list">
         {items.slice(0, 6).map((item, index) => (

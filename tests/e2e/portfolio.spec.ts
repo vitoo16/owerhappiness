@@ -13,6 +13,10 @@ async function login(page: import('@playwright/test').Page) {
 }
 
 test('public portfolio renders database-backed work', async ({ page }) => {
+  // Skip the one-shot stickman cutscene so content assertions stay stable.
+  await page.addInitScript(() => {
+    sessionStorage.setItem('portfolio-intro-seen', '1');
+  });
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('I DESIGN');
   await expect(page.getByText('SELECTED WORK')).toBeVisible();
